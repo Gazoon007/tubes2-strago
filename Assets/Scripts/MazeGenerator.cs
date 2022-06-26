@@ -6,8 +6,8 @@ using System;
 [Flags]
 public enum WallState
 {
-    // 0000 -> NO WALLS
-    // 1111 -> LEFT,RIGHT,UP,DOWN
+    // 0000 -> tidak ada dinding
+    // 1111 -> kiri, kanan, atas, bawah untuk setiap cell dindingnya tertutup
     LEFT = 1, // 0001
     RIGHT = 2, // 0010
     UP = 4, // 0100
@@ -43,7 +43,7 @@ public static class MazeGenerator
         }
     }
 
-    private static WallState[,] ApplyRecursiveBacktracker(WallState[,] maze, int width, int height)
+    private static WallState[,] Backtrack(WallState[,] maze, int width, int height)
     {
         // here we make changes
         var rng = new System.Random(/*seed*/);
@@ -79,71 +79,31 @@ public static class MazeGenerator
 
     private static List<Neighbour> GetUnvisitedNeighbours(Position p, WallState[,] maze, int width, int height)
     {
+        void AddToList(ICollection<Neighbour> neighbours, Position position, WallState wallState)
+        {
+            if (!maze[position.X, position.Y].HasFlag(WallState.VISITED))
+            {
+                neighbours.Add(new Neighbour
+                {
+                    Position = position,
+                    SharedWall = wallState
+                });
+            }
+        }
+
         var list = new List<Neighbour>();
 
         if (p.X > 0) // left
-        {
-            if (!maze[p.X - 1, p.Y].HasFlag(WallState.VISITED))
-            {
-                list.Add(new Neighbour
-                {
-                    Position = new Position
-                    {
-                        X = p.X - 1,
-                        Y = p.Y
-                    },
-                    SharedWall = WallState.LEFT
-                });
-            }
-        }
+            AddToList(list, new Position {X = p.X - 1, Y = p.Y}, WallState.LEFT);
 
         if (p.Y > 0) // DOWN
-        {
-            if (!maze[p.X, p.Y - 1].HasFlag(WallState.VISITED))
-            {
-                list.Add(new Neighbour
-                {
-                    Position = new Position
-                    {
-                        X = p.X,
-                        Y = p.Y - 1
-                    },
-                    SharedWall = WallState.DOWN
-                });
-            }
-        }
+            AddToList(list, new Position {X = p.X, Y = p.Y - 1}, WallState.DOWN);
 
         if (p.Y < height - 1) // UP
-        {
-            if (!maze[p.X, p.Y + 1].HasFlag(WallState.VISITED))
-            {
-                list.Add(new Neighbour
-                {
-                    Position = new Position
-                    {
-                        X = p.X,
-                        Y = p.Y + 1
-                    },
-                    SharedWall = WallState.UP
-                });
-            }
-        }
+            AddToList(list, new Position {X = p.X, Y = p.Y + 1}, WallState.UP);
 
         if (p.X < width - 1) // RIGHT
-        {
-            if (!maze[p.X + 1, p.Y].HasFlag(WallState.VISITED))
-            {
-                list.Add(new Neighbour
-                {
-                    Position = new Position
-                    {
-                        X = p.X + 1,
-                        Y = p.Y
-                    },
-                    SharedWall = WallState.RIGHT
-                });
-            }
-        }
+            AddToList(list, new Position {X = p.X + 1, Y = p.Y}, WallState.RIGHT);
 
         return list;
     }
@@ -160,6 +120,6 @@ public static class MazeGenerator
             }
         }
         
-        return ApplyRecursiveBacktracker(maze, width, height);
+        return Backtrack(maze, width, height);
     }
 }
